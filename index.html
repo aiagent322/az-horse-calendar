@@ -294,6 +294,46 @@
     color: white;
   }
 
+  .filter-btn.nearme-btn {
+    background: var(--rust);
+    border-color: var(--rust);
+    color: white;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+  }
+  .filter-btn.nearme-btn.off {
+    background: none;
+    border-color: var(--rust);
+    color: var(--rust);
+  }
+  .radius-bar {
+    display: none;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 16px;
+    background: var(--sand);
+    border-bottom: 1px solid var(--border);
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+  .radius-bar::-webkit-scrollbar { display: none; }
+  .radius-label { font-size: 0.75rem; color: var(--tan); font-weight: 600; white-space: nowrap; }
+  .radius-btn {
+    background: none;
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 4px 10px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: var(--tan);
+    cursor: pointer;
+    white-space: nowrap;
+    font-family: "Source Sans 3", sans-serif;
+  }
+  .radius-btn.active { background: var(--rust); border-color: var(--rust); color: white; }
+  .nearme-status { font-size: 0.75rem; color: var(--tan); padding: 0 6px; white-space: nowrap; }
+
   /* ── MAIN LAYOUT ── */
   .main {
     max-width: 1200px;
@@ -647,7 +687,19 @@
 
 <!-- FILTERS -->
 <div class="filters-bar">
-  <div class="filters-inner" id="filterBtns"></div>
+  <div class="filters-inner">
+    <button class="filter-btn nearme-btn" id="nearmeBtn" onclick="toggleNearMe()">📍 Near Me</button>
+    <span class="nearme-status" id="nearmeStatus"></span>
+    <div id="filterBtns" style="display:contents"></div>
+  </div>
+</div>
+
+<div class="radius-bar" id="radiusBar">
+  <span class="radius-label">Radius:</span>
+  <button class="radius-btn" onclick="setRadius(25,this)">25 mi</button>
+  <button class="radius-btn active" onclick="setRadius(50,this)">50 mi</button>
+  <button class="radius-btn" onclick="setRadius(100,this)">100 mi</button>
+  <button class="radius-btn" onclick="setRadius(250,this)">250 mi</button>
 </div>
 
 <!-- MAIN -->
@@ -752,13 +804,18 @@ TODAY.setHours(0,0,0,0);
 
 function getFiltered() {
   return processed.filter(e => {
-    // Only show future events (or recurring with no date)
     const matchDate = !e._start || e._start >= TODAY;
     const matchCat = activeFilter === 'All' || e.Category === activeFilter;
     const q = searchTerm.toLowerCase();
     const matchSearch = !q || [e.EventName, e.Venue, e.City, e.Category, e.Description, e.EventType]
       .some(f => (f||'').toLowerCase().includes(q));
-    return matchDate && matchCat && matchSearch;
+    let matchNear = true;
+    if (nearMeActive && userLat !== null) {
+      const coords = getEventCoords(e);
+      if (!coords) { matchNear = false; }
+      else { matchNear = haversine(userLat, userLng, coords[0], coords[1]) <= nearMeRadius; }
+    }
+    return matchDate && matchCat && matchSearch && matchNear;
   });
 }
 
@@ -897,6 +954,100 @@ document.getElementById('searchInput').addEventListener('input', function() {
   searchTerm = this.value;
   render();
 });
+
+
+// ── CITY COORDS (AZ + surrounding) ──
+const CITY_COORDS = {
+  'Florence,AZ':[33.0314,-111.3873],'Scottsdale,AZ':[33.4942,-111.9261],
+  'Chino Valley,AZ':[34.7573,-112.4535],'Globe,AZ':[33.3942,-110.7865],
+  'Prescott Valley,AZ':[34.6100,-112.3154],'Prescott,AZ':[34.5400,-112.4685],
+  'Cottonwood,AZ':[34.7398,-112.0096],'Cave Creek,AZ':[33.8333,-111.9512],
+  'Hereford,AZ':[31.4515,-110.1637],'San Tan Valley,AZ':[33.1878,-111.5365],
+  'Scottsdale,AZ':[33.4942,-111.9261],'Show Low,AZ':[34.2542,-110.0298],
+  'Willcox,AZ':[32.2527,-109.8320],'Queen Creek,AZ':[33.2489,-111.6341],
+  'Tucson,AZ':[32.2226,-110.9747],'Buckeye,AZ':[33.3703,-112.5838],
+  'Wickenburg,AZ':[33.9651,-112.7296],'Wittmann,AZ':[33.7590,-112.5046],
+  'Maricopa,AZ':[33.0581,-112.0476],'Casa Grande,AZ':[32.8795,-111.7574],
+  'Litchfield Park,AZ':[33.4934,-112.3568],'Gilbert,AZ':[33.3528,-111.7890],
+  'Marana,AZ':[32.4366,-111.2201],'Laveen,AZ':[33.3645,-112.1693],
+  'Morristown,AZ':[33.8451,-112.8133],'Holbrook,AZ':[34.9020,-110.1598],
+  'Snowflake,AZ':[34.5136,-110.0784],'Concho,AZ':[34.4742,-109.6676],
+  'Cornville,AZ':[34.7329,-111.9243],'Seligman,AZ':[35.3253,-112.8757],
+  'Tombstone,AZ':[31.7124,-110.0674],'Heber,AZ':[34.3856,-110.6543],
+  'Williamson Valley,AZ':[34.7,-112.6],'Nogales,AZ':[31.3404,-110.9381],
+  'Aguila,AZ':[33.9509,-113.1726],'Congress,AZ':[34.1645,-112.8527],
+  'Steamboat,AZ':[36.4,-109.7],'Phoenix,AZ':[33.4484,-112.0740],
+  'Mesa,AZ':[33.4152,-111.8315],'Tempe,AZ':[33.4255,-111.9400],
+  'Chandler,AZ':[33.3062,-111.8413],'Glendale,AZ':[33.5387,-112.1860],
+  'Peoria,AZ':[33.5806,-112.2374],'Surprise,AZ':[33.6292,-112.3679],
+  'Goodyear,AZ':[33.4353,-112.3576],'Avondale,AZ':[33.4356,-112.3496],
+  'Linden,AZ':[34.3720,-110.1414]
+};
+
+function haversine(lat1, lon1, lat2, lon2) {
+  const R = 3958.8;
+  const dLat = (lat2-lat1)*Math.PI/180;
+  const dLon = (lon2-lon1)*Math.PI/180;
+  const a = Math.sin(dLat/2)**2 + Math.cos(lat1*Math.PI/180)*Math.cos(lat2*Math.PI/180)*Math.sin(dLon/2)**2;
+  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+}
+
+function getEventCoords(e) {
+  const city = (e.City||'').trim();
+  const state = (e.State||'AZ').trim();
+  return CITY_COORDS[city+','+state] || null;
+}
+
+let userLat = null, userLng = null;
+let nearMeRadius = 50;
+let nearMeActive = false;
+
+function toggleNearMe() {
+  const btn = document.getElementById('nearmeBtn');
+  const status = document.getElementById('nearmeStatus');
+  const radiusBar = document.getElementById('radiusBar');
+
+  if (nearMeActive) {
+    nearMeActive = false;
+    userLat = null; userLng = null;
+    btn.classList.add('off');
+    btn.textContent = '📍 Near Me';
+    status.textContent = '';
+    radiusBar.style.display = 'none';
+    render();
+    return;
+  }
+
+  status.textContent = 'Locating…';
+  if (!navigator.geolocation) {
+    status.textContent = '⚠️ Not supported';
+    return;
+  }
+  navigator.geolocation.getCurrentPosition(
+    pos => {
+      userLat = pos.coords.latitude;
+      userLng = pos.coords.longitude;
+      nearMeActive = true;
+      btn.classList.remove('off');
+      btn.textContent = '📍 Near Me ✓';
+      status.textContent = '';
+      radiusBar.style.display = 'flex';
+      render();
+    },
+    () => {
+      status.textContent = '⚠️ Location denied';
+      nearMeActive = false;
+    },
+    { timeout: 8000 }
+  );
+}
+
+function setRadius(miles, btn) {
+  nearMeRadius = miles;
+  document.querySelectorAll('.radius-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  if (nearMeActive) render();
+}
 
 // ── INIT ──
 renderFilters();
