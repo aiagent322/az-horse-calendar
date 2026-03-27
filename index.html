@@ -700,13 +700,18 @@ const topCats = Object.entries(catCounts).sort((a,b) => b[1]-a[1]).slice(0, 12).
 let activeFilter = 'All';
 let searchTerm = '';
 
+const TODAY = new Date();
+TODAY.setHours(0,0,0,0);
+
 function getFiltered() {
   return processed.filter(e => {
+    // Only show future events (or recurring with no date)
+    const matchDate = !e._start || e._start >= TODAY;
     const matchCat = activeFilter === 'All' || e.Category === activeFilter;
     const q = searchTerm.toLowerCase();
     const matchSearch = !q || [e.EventName, e.Venue, e.City, e.Category, e.Description, e.EventType]
       .some(f => (f||'').toLowerCase().includes(q));
-    return matchCat && matchSearch;
+    return matchDate && matchCat && matchSearch;
   });
 }
 
