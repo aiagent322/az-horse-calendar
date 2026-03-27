@@ -204,6 +204,48 @@
     margin: 0 auto;
   }
 
+  /* ── SEARCH BAR ── */
+  .search-bar {
+    background: var(--white);
+    padding: 12px 16px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .search-inner {
+    max-width: 1200px;
+    margin: 0 auto;
+    position: relative;
+  }
+
+  .search-inner input {
+    width: 100%;
+    background: var(--sand);
+    border: 1.5px solid var(--border);
+    border-radius: 10px;
+    padding: 11px 16px 11px 40px;
+    font-size: 0.95rem;
+    font-family: 'Source Sans 3', sans-serif;
+    color: var(--dark);
+    outline: none;
+    transition: border-color 0.2s;
+  }
+
+  .search-inner input:focus {
+    border-color: var(--rust);
+    background: var(--white);
+  }
+
+  .search-inner input::placeholder { color: var(--tan); }
+
+  .search-inner .search-icon {
+    position: absolute;
+    left: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 16px;
+    pointer-events: none;
+  }
+
   /* ── FILTERS ── */
   .filters-bar {
     background: var(--white);
@@ -574,10 +616,7 @@
         <span class="brand-sub">Bridle &amp; Bit Magazine</span>
       </div>
     </a>
-    <div class="header-search">
-      <span class="search-icon">🔍</span>
-      <input type="text" id="searchInput" placeholder="Search events, venues, cities…">
-    </div>
+
     <div class="header-stats">
       <div class="stat-pill">
         <span class="stat-num" id="totalEvents">—</span>
@@ -597,6 +636,14 @@
   <h1>The <em>Complete</em> Arizona<br>Equestrian Calendar</h1>
   <p class="hero-sub">Rodeos, barrel racing, team roping, dressage, clinics & more — all in one place.</p>
 </section>
+
+<!-- SEARCH -->
+<div class="search-bar">
+  <div class="search-inner">
+    <span class="search-icon">🔍</span>
+    <input type="text" id="searchInput" placeholder="Search events, venues, cities…">
+  </div>
+</div>
 
 <!-- FILTERS -->
 <div class="filters-bar">
