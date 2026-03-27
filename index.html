@@ -204,6 +204,36 @@
     margin: 0 auto;
   }
 
+  .hero-stats {
+    display: flex;
+    justify-content: center;
+    gap: 40px;
+    margin-top: 24px;
+  }
+
+  .hero-stat {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .hero-stat-num {
+    font-family: 'Playfair Display', serif;
+    font-size: 2rem;
+    font-weight: 900;
+    color: var(--gold);
+    line-height: 1;
+  }
+
+  .hero-stat-lbl {
+    font-size: 0.72rem;
+    font-weight: 600;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: rgba(255,255,255,0.55);
+    margin-top: 4px;
+  }
+
   /* ── SEARCH BAR ── */
   .search-bar {
     background: var(--white);
@@ -650,7 +680,6 @@
 <header class="site-header">
   <div class="header-inner">
     <a class="header-brand" href="#">
-      <div class="brand-icon">🐴</div>
       <div class="brand-text">
         <span class="brand-title">AZ Horse Calendar</span>
         <span class="brand-sub">Bridle &amp; Bit Magazine</span>
@@ -675,6 +704,11 @@
   <div class="hero-badge">Arizona 2026</div>
   <h1>The <em>Complete</em> Arizona<br>Equestrian Calendar</h1>
   <p class="hero-sub">Rodeos, barrel racing, team roping, dressage, clinics & more — all in one place.</p>
+  <div class="hero-stats">
+    <div class="hero-stat"><span class="hero-stat-num">168</span><span class="hero-stat-lbl">Events</span></div>
+    <div class="hero-stat"><span class="hero-stat-num">36</span><span class="hero-stat-lbl">Categories</span></div>
+    <div class="hero-stat"><span class="hero-stat-num">80</span><span class="hero-stat-lbl">Arenas</span></div>
+  </div>
 </section>
 
 <!-- SEARCH -->
